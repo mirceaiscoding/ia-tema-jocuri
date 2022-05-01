@@ -12,12 +12,13 @@ NEGRU = (0, 0, 0)
 ROSU = (255, 0, 0)
 ALB = (255, 255, 255)
 
-LINE_WIDTH = 5
+LINE_WIDTH = 1
 
 # dimensiunea ferestrei in pixeli
 L = 75
 CELL_SIZE = (L, L)
 DISPLAY_SIZE = (L*5, L*10)
+
 
 def elem_identice(lista):
     if(all(elem == lista[0] for elem in lista[1:])):
@@ -34,28 +35,150 @@ class Joc:
     JMIN = None
     JMAX = None
     GOL = '#'
+    INACCESIBIL = "X"
+    WHITE = "W"
+    BLACK = "B"
 
     @classmethod
     def initializeaza(cls, display, NR_LINII=NR_LINII, NR_COLOANE=NR_COLOANE, dim_celula=L):
         cls.display = display
         cls.dim_celula = dim_celula
-        cls.x_img = pygame.image.load('ics.png')
-        cls.x_img = pygame.transform.scale(cls.x_img, (dim_celula, math.floor(
-            dim_celula*cls.x_img.get_height()/cls.x_img.get_width())))
-        cls.zero_img = pygame.image.load('zero.png')
-        cls.zero_img = pygame.transform.scale(cls.zero_img, (dim_celula, math.floor(
-            dim_celula*cls.zero_img.get_height()/cls.zero_img.get_width())))
+        cls.white_circle_iamge = pygame.image.load('white_circle.png')
+        cls.white_circle_iamge = pygame.transform.scale(cls.white_circle_iamge, (dim_celula, math.floor(
+            dim_celula*cls.white_circle_iamge.get_height()/cls.white_circle_iamge.get_width())))
+        cls.black_circle_image = pygame.image.load('black_circle.png')
+        cls.black_circle_image = pygame.transform.scale(cls.black_circle_image, (dim_celula, math.floor(
+            dim_celula*cls.black_circle_image.get_height()/cls.black_circle_image.get_width())))
         cls.celuleGrid = []  # este lista cu patratelele din grid
         for linie in range(NR_LINII):
             cls.celuleGrid.append([])
             for coloana in range(NR_COLOANE):
-                patr = pygame.Rect(coloana*(dim_celula),
-                                   linie*(dim_celula), dim_celula, dim_celula)
-                cls.celuleGrid[linie].append(patr)
+                patrat = pygame.Rect(coloana*(dim_celula),
+                                     linie*(dim_celula), dim_celula, dim_celula)
+                cls.celuleGrid[linie].append(patrat)
+
+    def deseneaza_linii_grid(self):
+        # desenez liniile tablei
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[0][0].center,
+                         self.__class__.celuleGrid[2][2].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[0][0].center,
+                         self.__class__.celuleGrid[0][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[1][1].center,
+                         self.__class__.celuleGrid[1][3].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[0][1].center,
+                         self.__class__.celuleGrid[1][1].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[0][2].center,
+                         self.__class__.celuleGrid[9][2].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[0][3].center,
+                         self.__class__.celuleGrid[1][3].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[0][4].center,
+                         self.__class__.celuleGrid[2][2].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[2][0].center,
+                         self.__class__.celuleGrid[2][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[3][0].center,
+                         self.__class__.celuleGrid[3][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[4][0].center,
+                         self.__class__.celuleGrid[4][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[5][0].center,
+                         self.__class__.celuleGrid[5][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[6][0].center,
+                         self.__class__.celuleGrid[6][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[7][0].center,
+                         self.__class__.celuleGrid[7][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[2][0].center,
+                         self.__class__.celuleGrid[7][0].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[2][1].center,
+                         self.__class__.celuleGrid[7][1].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[2][3].center,
+                         self.__class__.celuleGrid[7][3].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[2][4].center,
+                         self.__class__.celuleGrid[7][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[7][2].center,
+                         self.__class__.celuleGrid[9][0].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[7][2].center,
+                         self.__class__.celuleGrid[9][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[8][1].center,
+                         self.__class__.celuleGrid[8][3].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[9][0].center,
+                         self.__class__.celuleGrid[9][4].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[8][1].center,
+                         self.__class__.celuleGrid[9][1].center,
+                         width=LINE_WIDTH)
+
+        pygame.draw.line(self.__class__.display, NEGRU,
+                         self.__class__.celuleGrid[8][3].center,
+                         self.__class__.celuleGrid[9][3].center,
+                         width=LINE_WIDTH)
+
+        pygame.display.update()
 
     # tabla de exemplu este ["#","x","#","0",......]
     def deseneaza_grid(self, marcaj=None):
-    
+        
         for linie in range(Joc.NR_LINII):
             for coloana in range(Joc.NR_COLOANE):
                 if marcaj == (linie, coloana):
@@ -67,144 +190,75 @@ class Joc:
                 # alb = (255,255,255)
                 pygame.draw.rect(self.__class__.display, culoare,
                                  self.__class__.celuleGrid[linie][coloana])
-                if self.matr[linie][coloana] == 'x':
-                    self.__class__.display.blit(self.__class__.x_img, (coloana*(self.__class__.dim_celula), linie*(
-                        self.__class__.dim_celula) + (self.__class__.dim_celula-self.__class__.x_img.get_height())//2))
-                elif self.matr[linie][coloana] == '0':
-                    self.__class__.display.blit(self.__class__.zero_img, (coloana*(self.__class__.dim_celula), linie*(
-                        self.__class__.dim_celula)+(self.__class__.dim_celula-self.__class__.zero_img.get_height())//2))
+                
+        self.deseneaza_linii_grid()
+        
+        for linie in range(Joc.NR_LINII):
+            for coloana in range(Joc.NR_COLOANE):
+                if self.matr[linie][coloana] == self.__class__.WHITE:
+                    self.__class__.display.blit(self.__class__.white_circle_iamge, (coloana*(self.__class__.dim_celula), linie*(
+                        self.__class__.dim_celula) + (self.__class__.dim_celula-self.__class__.white_circle_iamge.get_height())//2))
+                elif self.matr[linie][coloana] == self.__class__.BLACK:
+                    self.__class__.display.blit(self.__class__.black_circle_image, (coloana*(self.__class__.dim_celula), linie*(
+                        self.__class__.dim_celula)+(self.__class__.dim_celula-self.__class__.black_circle_image.get_height())//2))
         # pygame.display.flip() # !!! obligatoriu pentru a actualiza interfata (desenul)
 
-        # desenez liniile tablei
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[0][0].center,
-            self.__class__.celuleGrid[2][2].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[0][0].center,
-            self.__class__.celuleGrid[0][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[1][1].center,
-            self.__class__.celuleGrid[1][3].center,
-            width=LINE_WIDTH)
-        
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[0][1].center,
-            self.__class__.celuleGrid[1][1].center,
-            width=LINE_WIDTH)
-        
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[0][2].center,
-            self.__class__.celuleGrid[9][2].center,
-            width=LINE_WIDTH)
-        
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[0][3].center,
-            self.__class__.celuleGrid[1][3].center,
-            width=LINE_WIDTH)
-        
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[0][4].center,
-            self.__class__.celuleGrid[2][2].center,
-            width=LINE_WIDTH)
-        
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[2][0].center,
-            self.__class__.celuleGrid[2][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[3][0].center,
-            self.__class__.celuleGrid[3][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[4][0].center,
-            self.__class__.celuleGrid[4][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[5][0].center,
-            self.__class__.celuleGrid[5][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[6][0].center,
-            self.__class__.celuleGrid[6][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[7][0].center,
-            self.__class__.celuleGrid[7][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[2][0].center,
-            self.__class__.celuleGrid[7][0].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[2][1].center,
-            self.__class__.celuleGrid[7][1].center,
-            width=LINE_WIDTH)
-        
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[2][3].center,
-            self.__class__.celuleGrid[7][3].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[2][4].center,
-            self.__class__.celuleGrid[7][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[7][2].center,
-            self.__class__.celuleGrid[9][0].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[7][2].center,
-            self.__class__.celuleGrid[9][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[8][1].center,
-            self.__class__.celuleGrid[8][3].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[9][0].center,
-            self.__class__.celuleGrid[9][4].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[8][1].center,
-            self.__class__.celuleGrid[9][1].center,
-            width=LINE_WIDTH)
-
-        pygame.draw.line(self.__class__.display, NEGRU, 
-            self.__class__.celuleGrid[8][3].center,
-            self.__class__.celuleGrid[9][3].center,
-            width=LINE_WIDTH)
-
         pygame.display.update()
+        
 
     def __init__(self, tabla=None):
         if tabla:
             self.matr = tabla
         else:
             self.matr = []
-            for i in range(self.__class__.NR_LINII):
+            for i in range(4):
+                self.matr.append([self.__class__.BLACK] *
+                                 self.__class__.NR_COLOANE)
+            for i in range(self.__class__.NR_LINII-8):
                 self.matr.append([self.__class__.GOL] *
                                  self.__class__.NR_COLOANE)
+            for i in range(4):
+                self.matr.append([self.__class__.WHITE] *
+                                 self.__class__.NR_COLOANE)
+
+            self.matr[1][0] = self.__class__.INACCESIBIL
+            self.matr[1][4] = self.__class__.INACCESIBIL
+
+            self.matr[8][0] = self.__class__.INACCESIBIL
+            self.matr[8][4] = self.__class__.INACCESIBIL
 
     @classmethod
     def jucator_opus(cls, jucator):
         return cls.JMAX if jucator == cls.JMIN else cls.JMIN
+
+    @classmethod
+    def directii(x, y):
+        # directiile in care se poate deplasa de la coordonatele (x, y)
+        sus = (-1, 0)
+        dreapta = (0, 1)
+        jos = (1, 0)
+        stanga = (0, -1)
+        directii_normale = [sus, jos, stanga, dreapta]
+
+        if (x, y) in [(0, 0), (1, 1)]:
+            return [(1, 1), (-1, -1), sus, dreapta]
+
+        if (x, y) == (2, 2):
+            return [(-1, -1), (-1, 1)] + directii_normale
+
+        if (x, y) in [(0, 4), (1, 3)]:
+            return [(-1, 1), (1, -1), sus, stanga]
+
+        if (x, y) == (7, 2):
+            return [(1, 1), (1, -1)] + directii_normale
+
+        if (x, y) in [(8, 1), (9, 0)]:
+            return [(1, -1), (-1, 1), dreapta, jos]
+        
+        if (x, y) in [(8, 3), (9, 4)]:
+            return [(1, 1), (-1, -1), stanga, jos]
+
+        return directii_normale
 
     def final(self):
         rez = (elem_identice(self.matr[0])
@@ -216,7 +270,6 @@ class Joc:
                or elem_identice([self.matr[0][0], self.matr[1][1], self.matr[2][2]])
                or elem_identice([self.matr[0][2], self.matr[1][1], self.matr[2][0]]))
         if(rez):
-
             return rez
         elif self.__class__.GOL not in self.matr[0]+self.matr[1]+self.matr[2]:
             return 'remiza'
@@ -232,30 +285,6 @@ class Joc:
                     copie_matr[i][j] = jucator
                     l_mutari.append(Joc(copie_matr))
         return l_mutari
-
-    # linie deschisa inseamna linie pe care jucatorul mai poate forma o configuratie castigatoare
-    # practic e o linie fara simboluri ale jucatorului opus
-    def linie_deschisa(self, lista, jucator):
-        jo = self.jucator_opus(jucator)
-        # verific daca pe linia data nu am simbolul jucatorului opus
-        if not jo in lista:
-            return 1
-        return 0
-
-    def linii_deschise(self, jucator):
-        return self.linie_deschisa(self.matr[0], jucator)
-        + self.linie_deschisa(self.matr[1], jucator)
-        + self.linie_deschisa(self.matr[2], jucator)
-        + self.linie_deschisa([self.matr[0][0], self.matr[1]
-                              [0], self.matr[2][0]], jucator)
-        + self.linie_deschisa([self.matr[0][1], self.matr[1]
-                              [1], self.matr[2][1]], jucator)
-        + self.linie_deschisa([self.matr[0][2], self.matr[1]
-                              [2], self.matr[2][2]], jucator)
-        + self.linie_deschisa([self.matr[0][0], self.matr[1]
-                              [1], self.matr[2][2]], jucator)
-        + self.linie_deschisa([self.matr[0][2], self.matr[1]
-                              [1], self.matr[2][0]], jucator)
 
     def estimeaza_scor(self, adancime):
         t_final = self.final()
