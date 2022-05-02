@@ -6,7 +6,7 @@ import copy
 import math
 
 
-ADANCIME_MAX = 6
+ADANCIME_MAX = 1
 
 NEGRU = (0, 0, 0)
 ROSU = (255, 0, 0)
@@ -19,11 +19,10 @@ L = 75
 CELL_SIZE = (L, L)
 DISPLAY_SIZE = (L*5, L*10)
 
-
-def elem_identice(lista):
-    if(all(elem == lista[0] for elem in lista[1:])):
-        return lista[0] if lista[0] != Joc.GOL else False
-    return False
+# def elem_identice(lista):
+#     if(all(elem == lista[0] for elem in lista[1:])):
+#         return lista[0] if lista[0] != Joc.GOL else False
+#     return False
 
 
 class Joc:
@@ -178,7 +177,7 @@ class Joc:
 
     # tabla de exemplu este ["#","x","#","0",......]
     def deseneaza_grid(self, marcaj=None):
-        
+
         for linie in range(Joc.NR_LINII):
             for coloana in range(Joc.NR_COLOANE):
                 if marcaj == (linie, coloana):
@@ -190,9 +189,9 @@ class Joc:
                 # alb = (255,255,255)
                 pygame.draw.rect(self.__class__.display, culoare,
                                  self.__class__.celuleGrid[linie][coloana])
-                
+
         self.deseneaza_linii_grid()
-        
+
         for linie in range(Joc.NR_LINII):
             for coloana in range(Joc.NR_COLOANE):
                 if self.matr[linie][coloana] == self.__class__.WHITE:
@@ -204,7 +203,6 @@ class Joc:
         # pygame.display.flip() # !!! obligatoriu pentru a actualiza interfata (desenul)
 
         pygame.display.update()
-        
 
     def __init__(self, tabla=None):
         if tabla:
@@ -226,13 +224,19 @@ class Joc:
 
             self.matr[8][0] = self.__class__.INACCESIBIL
             self.matr[8][4] = self.__class__.INACCESIBIL
+            
+            self.matr[3][0] = self.__class__.GOL
+            self.matr[3][4] = self.__class__.GOL  
+                      
+            self.matr[6][0] = self.__class__.GOL
+            self.matr[6][4] = self.__class__.GOL
 
     @classmethod
     def jucator_opus(cls, jucator):
         return cls.JMAX if jucator == cls.JMIN else cls.JMIN
 
     @classmethod
-    def directii(x, y):
+    def directii(cls, x, y):
         # directiile in care se poate deplasa de la coordonatele (x, y)
         sus = (-1, 0)
         dreapta = (0, 1)
@@ -254,37 +258,97 @@ class Joc:
 
         if (x, y) in [(8, 1), (9, 0)]:
             return [(1, -1), (-1, 1), dreapta, jos]
-        
+
         if (x, y) in [(8, 3), (9, 4)]:
             return [(1, 1), (-1, -1), stanga, jos]
 
         return directii_normale
 
     def final(self):
-        rez = (elem_identice(self.matr[0])
-               or elem_identice(self.matr[1])
-               or elem_identice(self.matr[2])
-               or elem_identice([self.matr[0][0], self.matr[1][0], self.matr[2][0]])
-               or elem_identice([self.matr[0][1], self.matr[1][1], self.matr[2][1]])
-               or elem_identice([self.matr[0][2], self.matr[1][2], self.matr[2][2]])
-               or elem_identice([self.matr[0][0], self.matr[1][1], self.matr[2][2]])
-               or elem_identice([self.matr[0][2], self.matr[1][1], self.matr[2][0]]))
-        if(rez):
-            return rez
-        elif self.__class__.GOL not in self.matr[0]+self.matr[1]+self.matr[2]:
-            return 'remiza'
+        return False
+
+    def are_capturi(self, inamic, x, y):
+        # verific daca piesa aceasta poate captura
+        directii = Joc.directii(x, y)
+        for (i, j) in directii:
+            x_nou = x + i
+            y_nou = y + j
+            x_dupa = x + 2*i
+            y_dupa = y + 2*j
+            if x_nou < 0 or y_nou < 0 or x_nou >= Joc.NR_LINII or y_nou >= Joc.NR_COLOANE:
+                continue
+            if x_dupa < 0 or y_dupa < 0 or x_dupa >= Joc.NR_LINII or y_dupa >= Joc.NR_COLOANE:
+                continue
+
+            if self.matr[x_nou][y_nou] == inamic and self.matr[x_dupa][y_dupa] == Joc.GOL:
+                return True
+
+        return False
+
+    def adauga_stari_dupa_capturi(self, jucator, inamic, x, y, matrice, l_mutari):
+        if self.are_capturi(inamic, x, y):
+            directii = Joc.directii(x, y)
+            for (i, j) in directii:
+                x_nou = x + i
+                y_nou = y + j
+                x_dupa = x + 2*i
+                y_dupa = y + 2*j
+                if x_nou < 0 or y_nou < 0 or x_nou >= Joc.NR_LINII or y_nou >= Joc.NR_COLOANE:
+                    continue
+                if x_dupa < 0 or y_dupa < 0 or x_dupa >= Joc.NR_LINII or y_dupa >= Joc.NR_COLOANE:
+                    continue
+
+                if matrice[x_nou][y_nou] == inamic and matrice[x_dupa][y_dupa] == Joc.GOL:
+                    # poate captura
+                    copie_matr = copy.deepcopy(matrice)
+                    copie_matr[x][y] = Joc.GOL
+                    copie_matr[x_nou][y_nou] = Joc.GOL
+                    copie_matr[x_dupa][y_dupa] = jucator
+                    self.adauga_stari_dupa_capturi(
+                        jucator, inamic, x_dupa, y_dupa, copie_matr, l_mutari)
         else:
-            return False
+            l_mutari.append(Joc(matrice))
+
+    def mutari_cu_capturi(self, jucator):
+        l_mutari = []
+        are_capturi = False
+        inamic = Joc.jucator_opus(jucator)
+        for i in range(self.NR_LINII):
+            for j in range(self.NR_COLOANE):
+                if self.matr[i][j] == jucator:
+                    if self.are_capturi(inamic, i, j):
+                        are_capturi = True
+                        self.adauga_stari_dupa_capturi(
+                            jucator, inamic, i, j, self.matr, l_mutari)
+        return are_capturi, l_mutari
+
+    def mutari_fara_capturi(self, jucator):
+        l_mutari = []
+        for x in range(self.NR_LINII):
+            for y in range(self.NR_COLOANE):
+                if self.matr[x][y] == jucator:
+                    directii = Joc.directii(x, y)
+                    for (i, j) in directii:
+                        x_nou = x + i
+                        y_nou = y + j
+                        if x_nou < 0 or y_nou < 0 or x_nou >= Joc.NR_LINII or y_nou >= Joc.NR_COLOANE:
+                            continue
+
+                        if self.matr[x_nou][y_nou] == Joc.GOL:
+                            # se poate muta
+                            copie_matr = copy.deepcopy(self.matr)
+                            copie_matr[x][y] = Joc.GOL
+                            copie_matr[x_nou][y_nou] = jucator
+                            l_mutari.append(Joc(copie_matr))
+
+        return l_mutari
 
     def mutari(self, jucator):  # jucator = simbolul jucatorului care muta
-        l_mutari = []
-        for i in range(self.__class__.NR_LINII):
-            for j in range(self.__class__.NR_COLOANE):
-                if self.matr[i][j] == Joc.GOL:
-                    copie_matr = copy.deepcopy(self.matr)
-                    copie_matr[i][j] = jucator
-                    l_mutari.append(Joc(copie_matr))
-        return l_mutari
+        are_capturi, l_mutari = self.mutari_cu_capturi(jucator)
+        if are_capturi:
+            return l_mutari
+        else:
+            return self.mutari_fara_capturi(jucator)
 
     def estimeaza_scor(self, adancime):
         t_final = self.final()
@@ -296,7 +360,7 @@ class Joc:
         elif t_final == 'remiza':
             return 0
         else:
-            return (self.linii_deschise(self.__class__.JMAX) - self.linii_deschise(self.__class__.JMIN))
+            return 0
 
     def sirAfisare(self):
         sir = "  |"
@@ -321,7 +385,7 @@ class Stare:
     De asemenea cere ca in clasa Joc sa fie definita si o metoda numita mutari() care ofera lista cu configuratiile posibile in urma mutarii unui jucator
     """
 
-    def __init__(self, tabla_joc, j_curent, adancime, parinte=None, estimare=None):
+    def __init__(self, tabla_joc:Joc, j_curent, adancime, parinte=None, estimare=None):
         self.tabla_joc = tabla_joc
         self.j_curent = j_curent
 
@@ -353,7 +417,7 @@ class Stare:
 """ Algoritmul MinMax """
 
 
-def min_max(stare):
+def min_max(stare: Stare):
 
     if stare.adancime == 0 or stare.tabla_joc.final():
         stare.estimare = stare.tabla_joc.estimeaza_scor(stare.adancime)
@@ -375,7 +439,7 @@ def min_max(stare):
     return stare
 
 
-def alpha_beta(alpha, beta, stare):
+def alpha_beta(alpha, beta, stare: Stare):
     if stare.adancime == 0 or stare.tabla_joc.final():
         stare.estimare = stare.tabla_joc.estimeaza_scor(stare.adancime)
         return stare
@@ -446,12 +510,13 @@ def main():
     # initializare jucatori
     raspuns_valid = False
     while not raspuns_valid:
-        Joc.JMIN = input("Doriti sa jucati cu x sau cu 0? ").lower()
-        if (Joc.JMIN in ['x', '0']):
+        Joc.JMIN = input(
+            "Doriti sa jucati cu alb ('W') sau cu negru ('B')?").upper()
+        if (Joc.JMIN in ['W', 'B']):
             raspuns_valid = True
         else:
-            print("Raspunsul trebuie sa fie x sau 0.")
-    Joc.JMAX = '0' if Joc.JMIN == 'x' else 'x'
+            print("Raspunsul trebuie sa fie W sau B.")
+    Joc.JMAX = 'W' if Joc.JMIN == 'B' else 'B'
 
     # initializare tabla
     tabla_curenta = Joc()
@@ -459,11 +524,11 @@ def main():
     print(str(tabla_curenta))
 
     # creare stare initiala
-    stare_curenta = Stare(tabla_curenta, 'x', ADANCIME_MAX)
+    stare_curenta = Stare(tabla_curenta, "W", ADANCIME_MAX)
 
     # setari interf grafica
     pygame.init()
-    pygame.display.set_caption('x si 0')
+    pygame.display.set_caption('ASTAR')
 
     ecran = pygame.display.set_mode(size=DISPLAY_SIZE)
     Joc.initializeaza(ecran)
