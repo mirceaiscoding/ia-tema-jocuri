@@ -10,6 +10,7 @@ ADANCIME_MAX = 1
 
 NEGRU = (0, 0, 0)
 ROSU = (255, 0, 0)
+VERDE = (0, 255, 0)
 ALB = (255, 255, 255)
 
 LINE_WIDTH = 1
@@ -176,13 +177,15 @@ class Joc:
         pygame.display.update()
 
     # tabla de exemplu este ["#","x","#","0",......]
-    def deseneaza_grid(self, marcaj=None):
+    def deseneaza_grid(self, marcaj=None, posibile_pozitii=[]):
 
         for linie in range(Joc.NR_LINII):
             for coloana in range(Joc.NR_COLOANE):
                 if marcaj == (linie, coloana):
                     # daca am o patratica selectata, o desenez cu rosu
                     culoare = ROSU
+                elif (linie, coloana) in posibile_pozitii:
+                    culoare = VERDE
                 else:
                     # altfel o desenez cu alb
                     culoare = ALB
@@ -266,6 +269,46 @@ class Joc:
 
     def final(self):
         return False
+
+    def pozitii_in_care_poate_muta(self, x, y):
+        jucator = self.matr[x][y]
+        inamic = self.jucator_opus(jucator)
+        pozitii = []
+        
+        are_capturi, mutari_cu_capturi = self.mutari_cu_capturi(jucator)
+        
+        if are_capturi:
+            if self.are_capturi(inamic, x, y):
+                directii = Joc.directii(x, y)
+                for (i, j) in directii:
+                    x_nou = x + i
+                    y_nou = y + j
+                    x_dupa = x + 2*i
+                    y_dupa = y + 2*j
+                    if x_nou < 0 or y_nou < 0 or x_nou >= Joc.NR_LINII or y_nou >= Joc.NR_COLOANE:
+                        continue
+                    if x_dupa < 0 or y_dupa < 0 or x_dupa >= Joc.NR_LINII or y_dupa >= Joc.NR_COLOANE:
+                        continue
+
+                    if self.matr[x_nou][y_nou] == inamic and self.matr[x_dupa][y_dupa] == Joc.GOL:
+                        pozitii.append((x_dupa, y_dupa))
+                return pozitii
+        else:
+            directii = Joc.directii(x, y)
+            for (i, j) in directii:
+                x_nou = x + i
+                y_nou = y + j
+                if x_nou < 0 or y_nou < 0 or x_nou >= Joc.NR_LINII or y_nou >= Joc.NR_COLOANE:
+                    continue
+
+                if self.matr[x_nou][y_nou] == Joc.GOL:
+                    # se poate muta
+                    copie_matr = copy.deepcopy(self.matr)
+                    copie_matr[x][y] = Joc.GOL
+                    copie_matr[x_nou][y_nou] = jucator
+                    pozitii.append((x_nou, y_nou))
+
+        return pozitii
 
     def are_capturi(self, inamic, x, y):
         # verific daca piesa aceasta poate captura
@@ -528,12 +571,13 @@ def main():
 
     # setari interf grafica
     pygame.init()
-    pygame.display.set_caption('ASTAR')
+    pygame.display.set_caption('ASTAR Bina Mircea')
 
     ecran = pygame.display.set_mode(size=DISPLAY_SIZE)
     Joc.initializeaza(ecran)
 
     de_mutat = False
+    posibile_mutari = []
     tabla_curenta.deseneaza_grid()
     while True:
 
@@ -559,33 +603,45 @@ def main():
                                     if (de_mutat and linie == de_mutat[0] and coloana == de_mutat[1]):
                                         # daca am facut click chiar pe patratica selectata, o deselectez
                                         de_mutat = False
+                                        posibile_mutari = []
                                         stare_curenta.tabla_joc.deseneaza_grid()
                                     else:
                                         de_mutat = (linie, coloana)
+                                        posibile_mutari = stare_curenta.tabla_joc.pozitii_in_care_poate_muta(linie, coloana)
                                         # desenez gridul cu patratelul marcat
                                         stare_curenta.tabla_joc.deseneaza_grid(
-                                            de_mutat)
+                                            de_mutat, posibile_mutari)
+                                
                                 elif stare_curenta.tabla_joc.matr[linie][coloana] == Joc.GOL:
-                                    if de_mutat:
-                                        # eventuale teste legate de mutarea simbolului
+                                    if de_mutat and (linie, coloana) in posibile_mutari:
+                                        
                                         stare_curenta.tabla_joc.matr[de_mutat[0]
                                                                      ][de_mutat[1]] = Joc.GOL
+
+                                        x, y = de_mutat
                                         de_mutat = False
-                                    # plasez simbolul pe "tabla de joc"
-                                    stare_curenta.tabla_joc.matr[linie][coloana] = Joc.JMIN
-                                    stare_curenta.tabla_joc.deseneaza_grid()
-                                    # afisarea starii jocului in urma mutarii utilizatorului
-                                    print("\nTabla dupa mutarea jucatorului")
-                                    print(str(stare_curenta))
+                                        
+                                        # verific daca captureaza o piesa
+                                        if abs(x - linie) == 2 or abs(y - coloana) == 2:
+                                            x_sters = int((x + linie) / 2)
+                                            y_sters = int((y + coloana) / 2)
+                                            stare_curenta.tabla_joc.matr[x_sters][y_sters] = Joc.GOL
+                                        
+                                        # plasez simbolul pe "tabla de joc"
+                                        stare_curenta.tabla_joc.matr[linie][coloana] = Joc.JMIN
+                                        stare_curenta.tabla_joc.deseneaza_grid()
+                                        # afisarea starii jocului in urma mutarii utilizatorului
+                                        print("\nTabla dupa mutarea jucatorului")
+                                        print(str(stare_curenta))
 
-                                    # testez daca jocul a ajuns intr-o stare finala
-                                    # si afisez un mesaj corespunzator in caz ca da
-                                    if (afis_daca_final(stare_curenta)):
-                                        break
+                                        # testez daca jocul a ajuns intr-o stare finala
+                                        # si afisez un mesaj corespunzator in caz ca da
+                                        if (afis_daca_final(stare_curenta)):
+                                            break
 
-                                    # S-a realizat o mutare. Schimb jucatorul cu cel opus
-                                    stare_curenta.j_curent = Joc.jucator_opus(
-                                        stare_curenta.j_curent)
+                                        # S-a realizat o mutare. Schimb jucatorul cu cel opus
+                                        stare_curenta.j_curent = Joc.jucator_opus(
+                                            stare_curenta.j_curent)
 
         # --------------------------------
         else:  # jucatorul e JMAX (calculatorul)
@@ -607,7 +663,7 @@ def main():
             print("Calculatorul a \"gandit\" timp de " +
                   str(t_dupa-t_inainte)+" milisecunde.")
 
-            if (afis_daca_final(stare_curenta)):
+            if (afis_daca_final(stare_curenta)): 
                 break
 
             # S-a realizat o mutare. Schimb jucatorul cu cel opus
