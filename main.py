@@ -6,7 +6,7 @@ import copy
 import math
 
 
-ADANCIME_MAX = 1
+ADANCIME_MAX = 3
 
 NEGRU = (0, 0, 0)
 ROSU = (255, 0, 0)
@@ -308,10 +308,10 @@ class Joc:
             print("Jucatorul nu mai are piese")
             return self.JMAX
 
-        # mutari = self.mutari(jucator)
-        # if len(mutari) == 0:
-        #     print(jucator + " nu mai are mutari")
-        #     return self.jucator_opus(jucator)
+        mutari = self.mutari(jucator)
+        if len(mutari) == 0:
+            print(jucator + " nu mai are mutari")
+            return self.jucator_opus(jucator)
 
         return False
 
@@ -378,7 +378,6 @@ class Joc:
 
     def stari_dupa_capturi(self, jucator, inamic, x, y, matrice):
         l_mutari = []
-        print(f"intra in ({x}, {y}), are capturi: {self.are_capturi(inamic, x, y)}")
         if self.are_capturi(inamic, x, y, matrice):
             directii = Joc.directii(x, y)
             for (i, j) in directii:
@@ -397,12 +396,12 @@ class Joc:
                     copie_matr[x][y] = Joc.GOL
                     copie_matr[x_nou][y_nou] = Joc.GOL
                     copie_matr[x_dupa][y_dupa] = jucator
-                    print(f"Continua recursia la ({x_dupa}, {y_dupa})")
+                    # print(f"Continua recursia la ({x_dupa}, {y_dupa})")
                     l_mutari.extend(self.stari_dupa_capturi(
                         jucator, inamic, x_dupa, y_dupa, copie_matr))
             return l_mutari
         else:
-            print(f"opreste recursia la ({x}, {y})")
+            # print(f"opreste recursia la ({x}, {y})")
             return [Joc(matrice)]
 
     def mutari_cu_capturi(self, jucator):
