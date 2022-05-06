@@ -227,10 +227,10 @@ class Joc:
 
             self.matr[8][0] = self.__class__.INACCESIBIL
             self.matr[8][4] = self.__class__.INACCESIBIL
-            
+
             self.matr[3][0] = self.__class__.GOL
-            self.matr[3][4] = self.__class__.GOL  
-                      
+            self.matr[3][4] = self.__class__.GOL
+
             self.matr[6][0] = self.__class__.GOL
             self.matr[6][4] = self.__class__.GOL
 
@@ -272,9 +272,9 @@ class Joc:
         nr_piese_JMIN = 0
         castiga_alb = True
         castiga_negru = True
-        
+
         for i in range(2):
-             for j in range(self.NR_COLOANE):
+            for j in range(self.NR_COLOANE):
                 if self.matr[i][j] != self.WHITE and self.matr[i][j] != self.INACCESIBIL:
                     castiga_alb = False
                     break
@@ -283,9 +283,9 @@ class Joc:
         if castiga_alb:
             print("Alb a cucerit triunghiul negru")
             return self.WHITE
-        
+
         for i in range(self.NR_LINII-2, self.NR_LINII):
-             for j in range(self.NR_COLOANE):
+            for j in range(self.NR_COLOANE):
                 if self.matr[i][j] != self.BLACK and self.matr[i][j] != self.INACCESIBIL:
                     castiga_negru = False
                     break
@@ -294,7 +294,7 @@ class Joc:
         if castiga_negru:
             print("Negru a cucerit triunghiul alb")
             return self.BLACK
-        
+
         for i in range(self.NR_LINII):
             for j in range(self.NR_COLOANE):
                 if self.matr[i][j] == self.JMAX:
@@ -307,20 +307,21 @@ class Joc:
         if nr_piese_JMIN == 0:
             print("Jucatorul nu mai are piese")
             return self.JMAX
-        
+
         # mutari = self.mutari(jucator)
         # if len(mutari) == 0:
         #     print(jucator + " nu mai are mutari")
         #     return self.jucator_opus(jucator)
 
+        return False
 
     def pozitii_in_care_poate_muta(self, x, y):
         jucator = self.matr[x][y]
         inamic = self.jucator_opus(jucator)
         pozitii = []
-        
+
         are_capturi, mutari_cu_capturi = self.mutari_cu_capturi(jucator)
-        
+
         if are_capturi:
             if self.are_capturi(inamic, x, y):
                 directii = Joc.directii(x, y)
@@ -354,7 +355,10 @@ class Joc:
 
         return pozitii
 
-    def are_capturi(self, inamic, x, y):
+    def are_capturi(self, inamic, x, y, matrice=None):
+        if matrice == None:
+            matrice = self.matr
+        
         # verific daca piesa aceasta poate captura
         directii = Joc.directii(x, y)
         for (i, j) in directii:
@@ -367,13 +371,15 @@ class Joc:
             if x_dupa < 0 or y_dupa < 0 or x_dupa >= Joc.NR_LINII or y_dupa >= Joc.NR_COLOANE:
                 continue
 
-            if self.matr[x_nou][y_nou] == inamic and self.matr[x_dupa][y_dupa] == Joc.GOL:
+            if matrice[x_nou][y_nou] == inamic and matrice[x_dupa][y_dupa] == Joc.GOL:
                 return True
 
         return False
 
-    def adauga_stari_dupa_capturi(self, jucator, inamic, x, y, matrice, l_mutari):
-        if self.are_capturi(inamic, x, y):
+    def stari_dupa_capturi(self, jucator, inamic, x, y, matrice):
+        l_mutari = []
+        print(f"intra in ({x}, {y}), are capturi: {self.are_capturi(inamic, x, y)}")
+        if self.are_capturi(inamic, x, y, matrice):
             directii = Joc.directii(x, y)
             for (i, j) in directii:
                 x_nou = x + i
@@ -391,10 +397,13 @@ class Joc:
                     copie_matr[x][y] = Joc.GOL
                     copie_matr[x_nou][y_nou] = Joc.GOL
                     copie_matr[x_dupa][y_dupa] = jucator
-                    self.adauga_stari_dupa_capturi(
-                        jucator, inamic, x_dupa, y_dupa, copie_matr, l_mutari)
+                    print(f"Continua recursia la ({x_dupa}, {y_dupa})")
+                    l_mutari.extend(self.stari_dupa_capturi(
+                        jucator, inamic, x_dupa, y_dupa, copie_matr))
+            return l_mutari
         else:
-            l_mutari.append(Joc(matrice))
+            print(f"opreste recursia la ({x}, {y})")
+            return [Joc(matrice)]
 
     def mutari_cu_capturi(self, jucator):
         l_mutari = []
@@ -405,8 +414,8 @@ class Joc:
                 if self.matr[i][j] == jucator:
                     if self.are_capturi(inamic, i, j):
                         are_capturi = True
-                        self.adauga_stari_dupa_capturi(
-                            jucator, inamic, i, j, self.matr, l_mutari)
+                        l_mutari.extend(self.stari_dupa_capturi(
+                            jucator, inamic, i, j, self.matr))
         return are_capturi, l_mutari
 
     def mutari_fara_capturi(self, jucator):
@@ -472,7 +481,7 @@ class Stare:
     De asemenea cere ca in clasa Joc sa fie definita si o metoda numita mutari() care ofera lista cu configuratiile posibile in urma mutarii unui jucator
     """
 
-    def __init__(self, tabla_joc:Joc, j_curent, adancime, parinte=None, estimare=None):
+    def __init__(self, tabla_joc: Joc, j_curent, adancime, parinte=None, estimare=None):
         self.tabla_joc = tabla_joc
         self.j_curent = j_curent
 
@@ -494,6 +503,7 @@ class Stare:
         l_stari_mutari = [
             Stare(mutare, juc_opus, self.adancime-1, parinte=self) for mutare in l_mutari]
 
+        # print(f"Din starea {self} se poate ajunge in starile {l_stari_mutari}")
         return l_stari_mutari
 
     def __str__(self):
@@ -507,7 +517,8 @@ class Stare:
 def min_max(stare: Stare):
 
     if stare.adancime == 0 or stare.tabla_joc.final(stare.j_curent):
-        stare.estimare = stare.tabla_joc.estimeaza_scor(stare.adancime, stare.j_curent)
+        stare.estimare = stare.tabla_joc.estimeaza_scor(
+            stare.adancime, stare.j_curent)
         return stare
 
     # calculez toate mutarile posibile din starea curenta
@@ -528,7 +539,8 @@ def min_max(stare: Stare):
 
 def alpha_beta(alpha, beta, stare: Stare):
     if stare.adancime == 0 or stare.tabla_joc.final(stare.j_curent):
-        stare.estimare = stare.tabla_joc.estimeaza_scor(stare.adancime)
+        stare.estimare = stare.tabla_joc.estimeaza_scor(
+            stare.adancime, stare.j_curent)
         return stare
 
     if alpha > beta:
@@ -571,7 +583,7 @@ def alpha_beta(alpha, beta, stare: Stare):
     return stare
 
 
-def afis_daca_final(stare_curenta:Stare):
+def afis_daca_final(stare_curenta: Stare):
     final = stare_curenta.tabla_joc.final(stare_curenta.j_curent)
     if(final):
         if (final == "remiza"):
@@ -651,26 +663,27 @@ def main():
                                         stare_curenta.tabla_joc.deseneaza_grid()
                                     else:
                                         de_mutat = (linie, coloana)
-                                        posibile_mutari = stare_curenta.tabla_joc.pozitii_in_care_poate_muta(linie, coloana)
+                                        posibile_mutari = stare_curenta.tabla_joc.pozitii_in_care_poate_muta(
+                                            linie, coloana)
                                         # desenez gridul cu patratelul marcat
                                         stare_curenta.tabla_joc.deseneaza_grid(
                                             de_mutat, posibile_mutari)
-                                
+
                                 elif stare_curenta.tabla_joc.matr[linie][coloana] == Joc.GOL:
                                     if de_mutat and (linie, coloana) in posibile_mutari:
-                                        
+
                                         stare_curenta.tabla_joc.matr[de_mutat[0]
                                                                      ][de_mutat[1]] = Joc.GOL
 
                                         x, y = de_mutat
                                         de_mutat = False
-                                        
+
                                         # verific daca captureaza o piesa
                                         if abs(x - linie) == 2 or abs(y - coloana) == 2:
                                             x_sters = int((x + linie) / 2)
                                             y_sters = int((y + coloana) / 2)
                                             stare_curenta.tabla_joc.matr[x_sters][y_sters] = Joc.GOL
-                                        
+
                                         # plasez simbolul pe "tabla de joc"
                                         stare_curenta.tabla_joc.matr[linie][coloana] = Joc.JMIN
                                         stare_curenta.tabla_joc.deseneaza_grid()
@@ -707,7 +720,7 @@ def main():
             print("Calculatorul a \"gandit\" timp de " +
                   str(t_dupa-t_inainte)+" milisecunde.")
 
-            if (afis_daca_final(stare_curenta)): 
+            if (afis_daca_final(stare_curenta)):
                 break
 
             # S-a realizat o mutare. Schimb jucatorul cu cel opus
