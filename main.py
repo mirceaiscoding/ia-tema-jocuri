@@ -267,8 +267,52 @@ class Joc:
 
         return directii_normale
 
-    def final(self):
-        return False
+    def final(self, jucator):
+        nr_piese_JMAX = 0
+        nr_piese_JMIN = 0
+        castiga_alb = True
+        castiga_negru = True
+        
+        for i in range(2):
+             for j in range(self.NR_COLOANE):
+                if self.matr[i][j] != self.WHITE and self.matr[i][j] != self.INACCESIBIL:
+                    castiga_alb = False
+                    break
+        if self.matr[2][2] != self.WHITE and self.matr[2][2] != self.INACCESIBIL:
+            castiga_alb = False
+        if castiga_alb:
+            print("Alb a cucerit triunghiul negru")
+            return self.WHITE
+        
+        for i in range(self.NR_LINII-2, self.NR_LINII):
+             for j in range(self.NR_COLOANE):
+                if self.matr[i][j] != self.BLACK and self.matr[i][j] != self.INACCESIBIL:
+                    castiga_negru = False
+                    break
+        if self.matr[7][2] != self.BLACK and self.matr[7][2] != self.INACCESIBIL:
+            castiga_negru = False
+        if castiga_negru:
+            print("Negru a cucerit triunghiul alb")
+            return self.BLACK
+        
+        for i in range(self.NR_LINII):
+            for j in range(self.NR_COLOANE):
+                if self.matr[i][j] == self.JMAX:
+                    nr_piese_JMAX += 1
+                if self.matr[i][j] == self.JMIN:
+                    nr_piese_JMIN += 1
+        if nr_piese_JMAX == 0:
+            print("Calculatorul nu mai are piese")
+            return self.JMIN
+        if nr_piese_JMIN == 0:
+            print("Jucatorul nu mai are piese")
+            return self.JMAX
+        
+        # mutari = self.mutari(jucator)
+        # if len(mutari) == 0:
+        #     print(jucator + " nu mai are mutari")
+        #     return self.jucator_opus(jucator)
+
 
     def pozitii_in_care_poate_muta(self, x, y):
         jucator = self.matr[x][y]
@@ -393,8 +437,8 @@ class Joc:
         else:
             return self.mutari_fara_capturi(jucator)
 
-    def estimeaza_scor(self, adancime):
-        t_final = self.final()
+    def estimeaza_scor(self, adancime, jucator):
+        t_final = self.final(jucator)
         # if (adancime==0):
         if t_final == self.__class__.JMAX:
             return (99+adancime)
@@ -462,8 +506,8 @@ class Stare:
 
 def min_max(stare: Stare):
 
-    if stare.adancime == 0 or stare.tabla_joc.final():
-        stare.estimare = stare.tabla_joc.estimeaza_scor(stare.adancime)
+    if stare.adancime == 0 or stare.tabla_joc.final(stare.j_curent):
+        stare.estimare = stare.tabla_joc.estimeaza_scor(stare.adancime, stare.j_curent)
         return stare
 
     # calculez toate mutarile posibile din starea curenta
@@ -483,7 +527,7 @@ def min_max(stare: Stare):
 
 
 def alpha_beta(alpha, beta, stare: Stare):
-    if stare.adancime == 0 or stare.tabla_joc.final():
+    if stare.adancime == 0 or stare.tabla_joc.final(stare.j_curent):
         stare.estimare = stare.tabla_joc.estimeaza_scor(stare.adancime)
         return stare
 
@@ -527,8 +571,8 @@ def alpha_beta(alpha, beta, stare: Stare):
     return stare
 
 
-def afis_daca_final(stare_curenta):
-    final = stare_curenta.tabla_joc.final()
+def afis_daca_final(stare_curenta:Stare):
+    final = stare_curenta.tabla_joc.final(stare_curenta.j_curent)
     if(final):
         if (final == "remiza"):
             print("Remiza!")
