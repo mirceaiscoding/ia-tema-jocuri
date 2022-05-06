@@ -455,7 +455,16 @@ class Joc:
         elif t_final == 'remiza':
             return 0
         else:
-            return 0
+            # returnez nr de piese ale computerului - nr de piese ale jucatorului
+            nr_piese_JMAX = 0
+            nr_piese_JMIN = 0
+            for i in range(self.NR_LINII):
+                for j in range(self.NR_COLOANE):
+                    if self.matr[i][j] == self.JMAX:
+                        nr_piese_JMAX += 1
+                    if self.matr[i][j] == self.JMIN:
+                        nr_piese_JMIN += 1
+            return nr_piese_JMAX - nr_piese_JMIN
 
     def sirAfisare(self):
         sir = "  |"
