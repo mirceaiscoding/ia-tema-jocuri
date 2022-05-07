@@ -6,7 +6,7 @@ import copy
 import math
 
 
-ADANCIME_MAX = 3
+ADANCIME_MAX = 1
 
 NEGRU = (0, 0, 0)
 ROSU = (255, 0, 0)
@@ -19,11 +19,6 @@ LINE_WIDTH = 1
 L = 75
 CELL_SIZE = (L, L)
 DISPLAY_SIZE = (L*5, L*10)
-
-# def elem_identice(lista):
-#     if(all(elem == lista[0] for elem in lista[1:])):
-#         return lista[0] if lista[0] != Joc.GOL else False
-#     return False
 
 
 class Joc:
@@ -212,13 +207,13 @@ class Joc:
         matr = []
         for i in range(4):
             matr.append([cls.BLACK] *
-                                cls.NR_COLOANE)
+                        cls.NR_COLOANE)
         for i in range(cls.NR_LINII-8):
             matr.append([cls.GOL] *
-                                cls.NR_COLOANE)
+                        cls.NR_COLOANE)
         for i in range(4):
             matr.append([cls.WHITE] *
-                                cls.NR_COLOANE)
+                        cls.NR_COLOANE)
 
         matr[1][0] = cls.INACCESIBIL
         matr[1][4] = cls.INACCESIBIL
@@ -233,7 +228,7 @@ class Joc:
         matr[6][4] = cls.GOL
 
         return matr
-    
+
     def __init__(self, tabla=None):
         if tabla:
             self.matr = tabla
@@ -326,10 +321,10 @@ class Joc:
         inamic = self.jucator_opus(jucator)
         pozitii = []
 
-        are_capturi, mutari_cu_capturi = self.mutari_cu_capturi(jucator)
+        are_capturi = self.are_capturi(jucator)
 
         if are_capturi:
-            if self.are_capturi(inamic, x, y):
+            if self.are_capturi_din_punct(inamic, x, y):
                 directii = Joc.directii(x, y)
                 for (i, j) in directii:
                     x_nou = x + i
@@ -361,10 +356,10 @@ class Joc:
 
         return pozitii
 
-    def are_capturi(self, inamic, x, y, matrice=None):
+    def are_capturi_din_punct(self, inamic, x, y, matrice=None):
         if matrice == None:
             matrice = self.matr
-        
+
         # verific daca piesa aceasta poate captura
         directii = Joc.directii(x, y)
         for (i, j) in directii:
@@ -384,7 +379,7 @@ class Joc:
 
     def stari_dupa_capturi(self, jucator, inamic, x, y, matrice):
         l_mutari = []
-        if self.are_capturi(inamic, x, y, matrice):
+        if self.are_capturi_din_punct(inamic, x, y, matrice):
             directii = Joc.directii(x, y)
             for (i, j) in directii:
                 x_nou = x + i
@@ -417,11 +412,21 @@ class Joc:
         for i in range(self.NR_LINII):
             for j in range(self.NR_COLOANE):
                 if self.matr[i][j] == jucator:
-                    if self.are_capturi(inamic, i, j):
+                    if self.are_capturi_din_punct(inamic, i, j):
                         are_capturi = True
                         l_mutari.extend(self.stari_dupa_capturi(
                             jucator, inamic, i, j, self.matr))
         return are_capturi, l_mutari
+
+    def are_capturi(self, jucator):
+        are_capturi = False
+        inamic = Joc.jucator_opus(jucator)
+        for i in range(self.NR_LINII):
+            for j in range(self.NR_COLOANE):
+                if self.matr[i][j] == jucator:
+                    if self.are_capturi_din_punct(inamic, i, j):
+                        are_capturi = True
+        return are_capturi
 
     def mutari_fara_capturi(self, jucator):
         l_mutari = []
@@ -445,8 +450,8 @@ class Joc:
         return l_mutari
 
     def mutari(self, jucator):  # jucator = simbolul jucatorului care muta
-        are_capturi, l_mutari = self.mutari_cu_capturi(jucator)
-        if are_capturi:
+        are_capturi_din_punct, l_mutari = self.mutari_cu_capturi(jucator)
+        if are_capturi_din_punct:
             return l_mutari
         else:
             return self.mutari_fara_capturi(jucator)
@@ -610,6 +615,22 @@ def afis_daca_final(stare_curenta: Stare):
     return False
 
 
+def muta_piesa(de_mutat, linie, coloana, stare_curenta: Stare, cu_captura=False):
+    stare_curenta.tabla_joc.matr[de_mutat[0]][de_mutat[1]] = Joc.GOL
+    x, y = de_mutat
+    de_mutat = False
+
+    # verific daca captureaza o piesa
+    if cu_captura:
+        x_sters = int((x + linie) / 2)
+        y_sters = int((y + coloana) / 2)
+        stare_curenta.tabla_joc.matr[x_sters][y_sters] = Joc.GOL
+
+    # plasez simbolul pe "tabla de joc"
+    stare_curenta.tabla_joc.matr[linie][coloana] = Joc.JMIN
+    stare_curenta.tabla_joc.deseneaza_grid()
+
+
 def main():
     # initializare algoritm
     raspuns_valid = False
@@ -648,6 +669,7 @@ def main():
 
     de_mutat = False
     posibile_mutari = []
+    captura_in_progres = False
     tabla_curenta.deseneaza_grid()
     while True:
 
@@ -665,7 +687,6 @@ def main():
                     stare_curenta = Stare(tabla_curenta, "W", ADANCIME_MAX)
                     stare_curenta.tabla_joc.deseneaza_grid()
 
-                    
                 elif event.type == pygame.MOUSEBUTTONDOWN:  # click
 
                     pos = pygame.mouse.get_pos()  # coordonatele clickului
@@ -690,34 +711,34 @@ def main():
                                         stare_curenta.tabla_joc.deseneaza_grid(
                                             de_mutat, posibile_mutari)
 
-                                elif stare_curenta.tabla_joc.matr[linie][coloana] == Joc.GOL:
-                                    if de_mutat and (linie, coloana) in posibile_mutari:
+                                elif stare_curenta.tabla_joc.matr[linie][coloana] == Joc.GOL and de_mutat and (linie, coloana) in posibile_mutari:
+                                    x, y = de_mutat
 
-                                        stare_curenta.tabla_joc.matr[de_mutat[0]
-                                                                     ][de_mutat[1]] = Joc.GOL
+                                    # jucatorul muta o piesa intr-o pozitie posibila
+                                    if captura_in_progres:
+                                        muta_piesa(de_mutat, linie, coloana, stare_curenta, cu_captura=True)
+                                        if not stare_curenta.tabla_joc.are_capturi_din_punct(Joc.JMAX, linie, coloana):
+                                            captura_in_progres = False
+                                        else:
+                                            posibile_mutari = stare_curenta.tabla_joc.pozitii_in_care_poate_muta(linie, coloana)
+                                    else:
+                                        if stare_curenta.tabla_joc.are_capturi_din_punct(Joc.JMAX, x, y):
+                                            captura_in_progres = True
+                                            posibile_mutari = stare_curenta.tabla_joc.pozitii_in_care_poate_muta(linie, coloana)
+                                        
+                                        muta_piesa(de_mutat, linie, coloana, stare_curenta, cu_captura=captura_in_progres)
 
-                                        x, y = de_mutat
-                                        de_mutat = False
+                                    # afisarea starii jocului in urma mutarii utilizatorului
+                                    print("\nTabla dupa mutarea jucatorului")
+                                    print(str(stare_curenta))
 
-                                        # verific daca captureaza o piesa
-                                        if abs(x - linie) == 2 or abs(y - coloana) == 2:
-                                            x_sters = int((x + linie) / 2)
-                                            y_sters = int((y + coloana) / 2)
-                                            stare_curenta.tabla_joc.matr[x_sters][y_sters] = Joc.GOL
+                                    # testez daca jocul a ajuns intr-o stare finala
+                                    # si afisez un mesaj corespunzator in caz ca da
+                                    if (afis_daca_final(stare_curenta)):
+                                        break
 
-                                        # plasez simbolul pe "tabla de joc"
-                                        stare_curenta.tabla_joc.matr[linie][coloana] = Joc.JMIN
-                                        stare_curenta.tabla_joc.deseneaza_grid()
-                                        # afisarea starii jocului in urma mutarii utilizatorului
-                                        print("\nTabla dupa mutarea jucatorului")
-                                        print(str(stare_curenta))
-
-                                        # testez daca jocul a ajuns intr-o stare finala
-                                        # si afisez un mesaj corespunzator in caz ca da
-                                        if (afis_daca_final(stare_curenta)):
-                                            break
-
-                                        # S-a realizat o mutare. Schimb jucatorul cu cel opus
+                                    # S-a realizat o mutare. Schimb jucatorul cu cel opus
+                                    if not captura_in_progres:
                                         stare_curenta.j_curent = Joc.jucator_opus(
                                             stare_curenta.j_curent)
 
