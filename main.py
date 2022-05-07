@@ -207,32 +207,38 @@ class Joc:
 
         pygame.display.update()
 
+    @classmethod
+    def matrice_initiala(cls):
+        matr = []
+        for i in range(4):
+            matr.append([cls.BLACK] *
+                                cls.NR_COLOANE)
+        for i in range(cls.NR_LINII-8):
+            matr.append([cls.GOL] *
+                                cls.NR_COLOANE)
+        for i in range(4):
+            matr.append([cls.WHITE] *
+                                cls.NR_COLOANE)
+
+        matr[1][0] = cls.INACCESIBIL
+        matr[1][4] = cls.INACCESIBIL
+
+        matr[8][0] = cls.INACCESIBIL
+        matr[8][4] = cls.INACCESIBIL
+
+        matr[3][0] = cls.GOL
+        matr[3][4] = cls.GOL
+
+        matr[6][0] = cls.GOL
+        matr[6][4] = cls.GOL
+
+        return matr
+    
     def __init__(self, tabla=None):
         if tabla:
             self.matr = tabla
         else:
-            self.matr = []
-            for i in range(4):
-                self.matr.append([self.__class__.BLACK] *
-                                 self.__class__.NR_COLOANE)
-            for i in range(self.__class__.NR_LINII-8):
-                self.matr.append([self.__class__.GOL] *
-                                 self.__class__.NR_COLOANE)
-            for i in range(4):
-                self.matr.append([self.__class__.WHITE] *
-                                 self.__class__.NR_COLOANE)
-
-            self.matr[1][0] = self.__class__.INACCESIBIL
-            self.matr[1][4] = self.__class__.INACCESIBIL
-
-            self.matr[8][0] = self.__class__.INACCESIBIL
-            self.matr[8][4] = self.__class__.INACCESIBIL
-
-            self.matr[3][0] = self.__class__.GOL
-            self.matr[3][4] = self.__class__.GOL
-
-            self.matr[6][0] = self.__class__.GOL
-            self.matr[6][4] = self.__class__.GOL
+            self.matr = self.__class__.matrice_initiala()
 
     @classmethod
     def jucator_opus(cls, jucator):
@@ -653,6 +659,13 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()  # inchide fereastra
                     sys.exit()
+                elif event.type == pygame.KEYUP and event.key == pygame.K_r:
+                    print("RESTART JOC")
+                    tabla_curenta = Joc()
+                    stare_curenta = Stare(tabla_curenta, "W", ADANCIME_MAX)
+                    stare_curenta.tabla_joc.deseneaza_grid()
+
+                    
                 elif event.type == pygame.MOUSEBUTTONDOWN:  # click
 
                     pos = pygame.mouse.get_pos()  # coordonatele clickului
