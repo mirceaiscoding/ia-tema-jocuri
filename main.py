@@ -389,6 +389,12 @@ class Joc:
         if (x, y) in [(8, 3), (9, 4)]:
             return [(1, 1), (-1, -1), stanga, jos]
 
+        if x == 2:
+            return [stanga, dreapta, jos]
+        
+        if x == 7:
+            return [stanga, dreapta, sus]
+
         return directii_normale
 
     def final(self, jucator):
@@ -626,6 +632,7 @@ class Stare:
     def __init__(self, tabla_joc: Joc, j_curent, adancime, parinte=None, estimare=None):
         self.tabla_joc = tabla_joc
         self.j_curent = j_curent
+        self.parinte = parinte
 
         # adancimea in arborele de stari
         self.adancime = adancime
@@ -739,19 +746,24 @@ def afis_daca_final(stare_curenta: Stare):
 
 
 def muta_piesa(de_mutat, linie, coloana, stare_curenta: Stare, cu_captura=False):
-    stare_curenta.tabla_joc.matr[de_mutat[0]][de_mutat[1]] = Joc.GOL
+
+    stare_actualizata = Stare(copy.deepcopy(stare_curenta.tabla_joc), stare_curenta.j_curent, stare_curenta.adancime, stare_curenta)
+
+    stare_actualizata.tabla_joc.matr[de_mutat[0]][de_mutat[1]] = Joc.GOL
     x, y = de_mutat
     de_mutat = False
-
+    
     # verific daca captureaza o piesa
     if cu_captura:
         x_sters = int((x + linie) / 2)
         y_sters = int((y + coloana) / 2)
-        stare_curenta.tabla_joc.matr[x_sters][y_sters] = Joc.GOL
+        stare_actualizata.tabla_joc.matr[x_sters][y_sters] = Joc.GOL
 
     # plasez simbolul pe "tabla de joc"
-    stare_curenta.tabla_joc.matr[linie][coloana] = Joc.JMIN
-    stare_curenta.tabla_joc.deseneaza_grid()
+    stare_actualizata.tabla_joc.matr[linie][coloana] = Joc.JMIN
+    stare_actualizata.tabla_joc.deseneaza_grid()
+    
+    return stare_actualizata
 
 
 def main():
@@ -790,10 +802,19 @@ def main():
                 if event.type == pygame.QUIT:
                     pygame.quit()  # inchide fereastra
                     sys.exit()
+                    
                 elif event.type == pygame.KEYUP and event.key == pygame.K_r:
                     print("RESTART JOC")
                     tabla_curenta = Joc()
                     stare_curenta = Stare(tabla_curenta, "W", ADANCIME_MAX)
+                    stare_curenta.tabla_joc.deseneaza_grid()
+                    
+                elif event.type == pygame.KEYUP and event.key == pygame.K_u:
+                    print("UNDO JOC")
+                    if stare_curenta.parinte == None:
+                        print("Nu se poate da undo pentru ca este in starea initiala")
+                        continue
+                    stare_curenta = stare_curenta.parinte
                     stare_curenta.tabla_joc.deseneaza_grid()
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:  # click
@@ -825,7 +846,7 @@ def main():
 
                                     # jucatorul muta o piesa intr-o pozitie posibila
                                     if captura_in_progres:
-                                        muta_piesa(
+                                        stare_curenta = muta_piesa(
                                             de_mutat, linie, coloana, stare_curenta, cu_captura=True)
                                         if not stare_curenta.tabla_joc.are_capturi_din_punct(Joc.JMAX, linie, coloana):
                                             captura_in_progres = False
@@ -838,7 +859,7 @@ def main():
                                             posibile_mutari = stare_curenta.tabla_joc.pozitii_in_care_poate_muta(
                                                 linie, coloana)
 
-                                        muta_piesa(
+                                        stare_curenta = muta_piesa(
                                             de_mutat, linie, coloana, stare_curenta, cu_captura=captura_in_progres)
 
                                     # afisarea starii jocului in urma mutarii utilizatorului
