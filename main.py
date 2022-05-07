@@ -6,8 +6,6 @@ import copy
 import math
 
 
-ADANCIME_MAX = 1
-
 NEGRU = (0, 0, 0)
 ROSU = (255, 0, 0)
 VERDE = (0, 255, 0)
@@ -19,6 +17,127 @@ LINE_WIDTH = 1
 L = 75
 CELL_SIZE = (L, L)
 DISPLAY_SIZE = (L*5, L*10)
+
+
+class Buton:
+    def __init__(self, display=None, left=0, top=0, w=0, h=0,culoareFundal=(53,80,115), culoareFundalSel=(89,134,194), text="", font="arial", fontDimensiune=16, culoareText=(255,255,255), valoare=""):
+        self.display=display		
+        self.culoareFundal=culoareFundal
+        self.culoareFundalSel=culoareFundalSel
+        self.text=text
+        self.font=font
+        self.w=w
+        self.h=h
+        self.selectat=False
+        self.fontDimensiune=fontDimensiune
+        self.culoareText=culoareText
+        #creez obiectul font
+        fontObj = pygame.font.SysFont(self.font, self.fontDimensiune)
+        self.textRandat=fontObj.render(self.text, True , self.culoareText) 
+        self.dreptunghi=pygame.Rect(left, top, w, h) 
+        #aici centram textul
+        self.dreptunghiText=self.textRandat.get_rect(center=self.dreptunghi.center)
+        self.valoare=valoare
+
+    def selecteaza(self,sel):
+        self.selectat=sel
+        self.deseneaza()
+        
+    def selecteazaDupacoord(self,coord):
+        if self.dreptunghi.collidepoint(coord):
+            self.selecteaza(True)
+            return True
+        return False
+
+    def updateDreptunghi(self):
+        self.dreptunghi.left=self.left
+        self.dreptunghi.top=self.top
+        self.dreptunghiText=self.textRandat.get_rect(center=self.dreptunghi.center)
+
+    def deseneaza(self):
+        culoareF= self.culoareFundalSel if self.selectat else self.culoareFundal
+        pygame.draw.rect(self.display, culoareF, self.dreptunghi)	
+        self.display.blit(self.textRandat ,self.dreptunghiText) 
+
+class GrupButoane:
+    def __init__(self, listaButoane=[], indiceSelectat=0, spatiuButoane=10,left=0, top=0):
+        self.listaButoane=listaButoane
+        self.indiceSelectat=indiceSelectat
+        self.listaButoane[self.indiceSelectat].selectat=True
+        self.top=top
+        self.left=left
+        leftCurent=self.left
+        for b in self.listaButoane:
+            b.top=self.top
+            b.left=leftCurent
+            b.updateDreptunghi()
+            leftCurent+=(spatiuButoane+b.w)
+
+    def selecteazaDupacoord(self,coord):
+        for ib,b in enumerate(self.listaButoane):
+            if b.selecteazaDupacoord(coord):
+                self.listaButoane[self.indiceSelectat].selecteaza(False)
+                self.indiceSelectat=ib
+                return True
+        return False
+
+    def deseneaza(self):
+        #atentie, nu face wrap
+        for b in self.listaButoane:
+            b.deseneaza()
+
+    def getValoare(self):
+        return self.listaButoane[self.indiceSelectat].valoare
+
+# ECRAN INITIAL
+
+def deseneaza_alegeri(display, tabla_curenta) :
+    btn_alg=GrupButoane(
+        top=30, 
+        left=30,  
+        listaButoane=[
+            Buton(display=display, w=80, h=30, text="minimax", valoare="1"), 
+            Buton(display=display, w=80, h=30, text="alphabeta", valoare="2")
+            ],
+        indiceSelectat=1)
+    btn_juc=GrupButoane(
+        top=100, 
+        left=30, 
+        listaButoane=[
+            Buton(display=display, w=50, h=30, text="White", valoare="W"), 
+            Buton(display=display, w=50, h=30, text="Black", valoare="B")
+            ], 
+        indiceSelectat=0)
+    btn_dificultate=GrupButoane(
+        top=170, 
+        left=30, 
+        listaButoane=[
+            Buton(display=display, w=60, h=30, text="Easy", valoare=1), 
+            Buton(display=display, w=60, h=30, text="Medium", valoare=3),
+            Buton(display=display, w=60, h=30, text="Hard", valoare=5)
+            ], 
+        indiceSelectat=0)
+    ok=Buton(display=display, top=240, left=30, w=40, h=30, text="ok", culoareFundal=(155,0,55))
+    btn_alg.deseneaza()
+    btn_juc.deseneaza()
+    btn_dificultate.deseneaza()
+    ok.deseneaza()
+    while True:
+        for ev in pygame.event.get(): 
+            if ev.type== pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif ev.type == pygame.MOUSEBUTTONDOWN: 
+                pos = pygame.mouse.get_pos()
+                if not btn_alg.selecteazaDupacoord(pos):
+                    if not btn_juc.selecteazaDupacoord(pos):
+                        if not btn_dificultate.selecteazaDupacoord(pos):
+                            if ok.selecteazaDupacoord(pos):
+                                display.fill((0,0,0)) #stergere ecran 
+                                tabla_curenta.deseneaza_grid()
+                                return btn_juc.getValoare(), btn_alg.getValoare(), btn_dificultate.getValoare()
+        pygame.display.update()
+
 
 
 class Joc:
@@ -632,33 +751,11 @@ def muta_piesa(de_mutat, linie, coloana, stare_curenta: Stare, cu_captura=False)
 
 
 def main():
-    # initializare algoritm
-    raspuns_valid = False
-    while not raspuns_valid:
-        tip_algoritm = input(
-            "Algorimul folosit? (raspundeti cu 1 sau 2)\n 1.Minimax\n 2.Alpha-beta\n ")
-        if tip_algoritm in ['1', '2']:
-            raspuns_valid = True
-        else:
-            print("Nu ati ales o varianta corecta.")
-    # initializare jucatori
-    raspuns_valid = False
-    while not raspuns_valid:
-        Joc.JMIN = input(
-            "Doriti sa jucati cu alb ('W') sau cu negru ('B')?").upper()
-        if (Joc.JMIN in ['W', 'B']):
-            raspuns_valid = True
-        else:
-            print("Raspunsul trebuie sa fie W sau B.")
-    Joc.JMAX = 'W' if Joc.JMIN == 'B' else 'B'
-
     # initializare tabla
     tabla_curenta = Joc()
     print("Tabla initiala")
     print(str(tabla_curenta))
 
-    # creare stare initiala
-    stare_curenta = Stare(tabla_curenta, "W", ADANCIME_MAX)
 
     # setari interf grafica
     pygame.init()
@@ -666,6 +763,14 @@ def main():
 
     ecran = pygame.display.set_mode(size=DISPLAY_SIZE)
     Joc.initializeaza(ecran)
+    # initializare algoritm
+
+    Joc.JMIN, tip_algoritm, ADANCIME_MAX = deseneaza_alegeri(ecran, tabla_curenta)
+
+    Joc.JMAX = 'W' if Joc.JMIN == 'B' else 'B'
+
+    # creare stare initiala
+    stare_curenta = Stare(tabla_curenta, "W", ADANCIME_MAX)
 
     de_mutat = False
     posibile_mutari = []
