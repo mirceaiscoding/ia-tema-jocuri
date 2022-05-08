@@ -1,3 +1,4 @@
+from statistics import mean, median
 import time
 
 import pygame
@@ -732,7 +733,7 @@ def alpha_beta(alpha, beta, stare: Stare):
 	return stare
 
 
-def afis_daca_final(stare_curenta: Stare):
+def afis_daca_final(stare_curenta: Stare, timpi_gandire_calculator):
 	final = stare_curenta.tabla_joc.final(stare_curenta.j_curent)
 	if(final):
 		if (final == "remiza"):
@@ -740,6 +741,11 @@ def afis_daca_final(stare_curenta: Stare):
 		else:
 			print("A castigat "+final)
 
+			# afisam date despre timpii de gandire ai calculatorului
+			print(f"Timp minim de gantire {min(timpi_gandire_calculator)}")
+			print(f"Timp maxim de gantire {max(timpi_gandire_calculator)}")
+			print(f"Mediana timpilor de gantire {median(timpi_gandire_calculator)}")
+			print(f"Media timpilor de gantire {mean(timpi_gandire_calculator)}")
 		return True
 
 	return False
@@ -793,6 +799,7 @@ def main():
 	posibile_mutari = []
 	captura_in_progres = False
 	tabla_curenta.deseneaza_grid()
+	timpi_gandire_calculator = []
 	t_inainte = int(round(time.time() * 1000))
 
 	while True:
@@ -882,7 +889,7 @@ def main():
 
 									# testez daca jocul a ajuns intr-o stare finala
 									# si afisez un mesaj corespunzator in caz ca da
-									if (afis_daca_final(stare_curenta)):
+									if (afis_daca_final(stare_curenta, timpi_gandire_calculator)):
 										break
 
 									# S-a realizat o mutare. Schimb jucatorul cu cel opus
@@ -907,10 +914,11 @@ def main():
 			stare_curenta.tabla_joc.deseneaza_grid()
 			# preiau timpul in milisecunde de dupa mutare
 			t_dupa = int(round(time.time() * 1000))
+			timpi_gandire_calculator.append(t_dupa-t_inainte)
 			print("Calculatorul a \"gandit\" timp de " +
 				  str(t_dupa-t_inainte)+" milisecunde.")
 
-			if (afis_daca_final(stare_curenta)):
+			if (afis_daca_final(stare_curenta, timpi_gandire_calculator)):
 				break
 
 			# S-a realizat o mutare. Schimb jucatorul cu cel opus
