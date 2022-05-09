@@ -404,6 +404,7 @@ class Joc:
 		castiga_alb = True
 		castiga_negru = True
 
+		# verific daca un triunghi a fost cucerit de adversar
 		for i in range(2):
 			for j in range(self.NR_COLOANE):
 				if self.matr[i][j] != self.WHITE and self.matr[i][j] != self.INACCESIBIL:
@@ -426,6 +427,7 @@ class Joc:
 			print("Negru a cucerit triunghiul alb")
 			return self.BLACK
 
+		# calculez cate piese are jucatorul si calculatorul
 		for i in range(self.NR_LINII):
 			for j in range(self.NR_COLOANE):
 				if self.matr[i][j] == self.JMAX:
@@ -439,6 +441,7 @@ class Joc:
 			print("Jucatorul nu mai are piese")
 			return self.JMAX
 
+		# verific daca jucatorul curent nu mai are mutari, daca da a castigat adversarul
 		mutari = self.mutari(jucator)
 		if len(mutari) == 0:
 			print(jucator + " nu mai are mutari")
@@ -447,6 +450,8 @@ class Joc:
 		return False
 
 	def pozitii_in_care_poate_muta(self, x, y):
+		# pozitiile in care poate muta jucatorul pentru a le colora cu verde si afisa in interfata
+		# se refera strict la locuri pe tabla nu la starile rezultate
 		jucator = self.matr[x][y]
 		inamic = self.jucator_opus(jucator)
 		pozitii = []
@@ -487,6 +492,7 @@ class Joc:
 		return pozitii
 
 	def are_capturi_din_punct(self, inamic, x, y, matrice=None):
+		# returneaza daca din punctul (x, y) se poate realiza o captura
 		if matrice == None:
 			matrice = self.matr
 
@@ -508,6 +514,8 @@ class Joc:
 		return False
 
 	def stari_dupa_capturi(self, jucator, inamic, x, y, matrice):
+		# genereaza starile din (x, y) care rezulta cu ajutorul unei capturi
+		# captura poate fi multipla
 		l_mutari = []
 		if self.are_capturi_din_punct(inamic, x, y, matrice):
 			directii = Joc.directii(x, y)
@@ -527,15 +535,16 @@ class Joc:
 					copie_matr[x][y] = Joc.GOL
 					copie_matr[x_nou][y_nou] = Joc.GOL
 					copie_matr[x_dupa][y_dupa] = jucator
-					# print(f"Continua recursia la ({x_dupa}, {y_dupa})")
+					# Continua recursia la (x_dupa, y_dupa)
 					l_mutari.extend(self.stari_dupa_capturi(
 						jucator, inamic, x_dupa, y_dupa, copie_matr))
 			return l_mutari
 		else:
-			# print(f"opreste recursia la ({x}, {y})")
+			# opreste recursia si returneaza jocul obtinut
 			return [Joc(matrice)]
 
 	def mutari_cu_capturi(self, jucator):
+		# returneaza daca exista capturi in jocul curent si o lista cu starile de dupa capturi
 		l_mutari = []
 		are_capturi = False
 		inamic = Joc.jucator_opus(jucator)
@@ -549,6 +558,7 @@ class Joc:
 		return are_capturi, l_mutari
 
 	def are_capturi(self, jucator):
+		# returneaza daca exista capturi in jocul curent
 		are_capturi = False
 		inamic = Joc.jucator_opus(jucator)
 		for i in range(self.NR_LINII):
@@ -586,26 +596,50 @@ class Joc:
 		else:
 			return self.mutari_fara_capturi(jucator)
 
-	def estimeaza_scor(self, adancime, jucator):
+	def estimeaza_scor(self, adancime, jucator, estimare=2):
 		t_final = self.final(jucator)
 		# if (adancime==0):
 		if t_final == self.__class__.JMAX:
-			return (99+adancime)
+			return (990+adancime)
 		elif t_final == self.__class__.JMIN:
-			return (-99-adancime)
+			return (-999-adancime)
 		elif t_final == 'remiza':
 			return 0
 		else:
-			# returnez nr de piese ale computerului - nr de piese ale jucatorului
-			nr_piese_JMAX = 0
-			nr_piese_JMIN = 0
-			for i in range(self.NR_LINII):
-				for j in range(self.NR_COLOANE):
-					if self.matr[i][j] == self.JMAX:
-						nr_piese_JMAX += 1
-					if self.matr[i][j] == self.JMIN:
-						nr_piese_JMIN += 1
-			return nr_piese_JMAX - nr_piese_JMIN
+			if estimare == 1:
+				# returnez nr de piese ale computerului - nr de piese ale jucatorului
+				nr_piese_JMAX = 0
+				nr_piese_JMIN = 0
+				for i in range(self.NR_LINII):
+					for j in range(self.NR_COLOANE):
+						if self.matr[i][j] == self.JMAX:
+							nr_piese_JMAX += 1
+						if self.matr[i][j] == self.JMIN:
+							nr_piese_JMIN += 1
+				return nr_piese_JMAX - nr_piese_JMIN
+			else:
+				# returnez (nr de piese ale computerului - nr de piese ale jucatorului) * 5 +
+    			# + (avansul pieselor calculatorului - avansul pieselor jucatorului)
+				nr_piese_JMAX = 0
+				nr_piese_JMIN = 0
+				for i in range(self.NR_LINII):
+					for j in range(self.NR_COLOANE):
+						if self.matr[i][j] == self.JMAX:
+							nr_piese_JMAX += 1
+						if self.matr[i][j] == self.JMIN:
+							nr_piese_JMIN += 1
+
+				avans_JMAX = 0
+				avans_JMIN = 0
+				for i in range(self.NR_LINII):
+					for j in range(self.NR_COLOANE):
+						if self.matr[i][j] == self.JMAX:
+							avans_JMAX += i
+						if self.matr[i][j] == self.JMIN:
+							avans_JMIN += self.NR_LINII-1-i
+				return (nr_piese_JMAX - nr_piese_JMIN) * 5 + avans_JMAX - avans_JMIN
+
+
 
 	def sirAfisare(self):
 		sir = "  |"
@@ -886,6 +920,9 @@ def main():
 									# afisarea starii jocului in urma mutarii utilizatorului
 									print("\nTabla dupa mutarea jucatorului")
 									print(str(stare_curenta))
+         
+									if not stare_curenta.tabla_joc.are_capturi_din_punct(Joc.JMAX, linie, coloana):
+										captura_in_progres = False
 
 									# testez daca jocul a ajuns intr-o stare finala
 									# si afisez un mesaj corespunzator in caz ca da
